@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Prompt — Instant Study & Writing Prompts</title>
+  <meta name="description" content="Get a fresh study, writing or habit prompt every day. Fast, mobile-friendly, free." />
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa6b2;--accent:#7dd3fc}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,Segoe UI,system-ui,Roboto,'Helvetica Neue',Arial;background:linear-gradient(180deg,#071021 0%, #071827 100%);color:#e6eef6;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:760px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#60a5fa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#04203a}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+    .card{background:rgba(255,255,255,0.02);padding:20px;border-radius:14px;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    .prompt{font-size:18px;line-height:1.4;margin:0 0 14px}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button,select{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:inherit;font-weight:600}
+    button:hover{transform:translateY(-2px);cursor:pointer}
+    .actions{margin-top:12px;display:flex;gap:8px}
+    .small{font-size:13px;color:var(--muted)}
+    footer{margin-top:14px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center}
+
+    @media (max-width:560px){.prompt{font-size:16px}} 
+
+    /* subtle shimmer for daily badge */
+    .badge{padding:6px 8px;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,0.03),rgba(255,255,255,0.05));font-weight:700;font-size:12px}
+
+    .share{border:1px dashed rgba(255,255,255,0.03)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">DP</div>
+      <div>
+        <h1>Daily Prompt</h1>
+        <p class="lead">A fresh writing, study or habit prompt — fast and shareable.</p>
+      </div>
+    </header>
+
+    <main class="card" id="app">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="badge" id="badge">Daily Prompt</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="small">Category</label>
+          <select id="category">
+            <option value="all">All</option>
+            <option value="study">Study</option>
+            <option value="writing">Writing</option>
+            <option value="habit">Habit</option>
+            <option value="creativity">Creativity</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="prompt" id="prompt">Loading prompt…</p>
+
+      <div class="meta">
+        <div class="small">Prompt source: <strong id="source">Curated</strong></div>
+        <div style="flex:1"></div>
+        <div class="small">Mobile friendly · No sign up</div>
+      </div>
+
+      <div class="actions">
+        <button id="newBtn">🔁 New Prompt</button>
+        <button id="copyBtn">📋 Copy</button>
+        <button id="shareBtn">📱 Share</button>
+        <button id="dailyToggle">🌞 Daily</button>
+        <button id="downloadBtn">⬇️ Download Pack</button>
+      </div>
+
+      <div style="height:8px"></div>
+
+      <div class="small">Want more? <a href="#" id="moreLink">Try our 7‑day focus challenge</a> · <a href="#" id="donate">Buy me a coffee</a></div>
+
+      <footer>
+        <div class="small">Made with ♥ — free to use</div>
+        <div class="small">Ads placeholder: add AdSense code here</div>
+      </footer>
+    </main>
+
+    <p style="color:var(--muted);font-size:13px;margin-top:12px">Tip: share a screenshot of your prompt on social — it helps the site grow.</p>
+  </div>
+
+  <script>
+    // --- PROMPTS LIST ---
+    const PROMPTS = [
+      {t: 'Write about one lesson you learned this week that surprised you.', c:'writing'},
+      {t: 'Pick one topic you struggled with this month and outline a 30-minute plan to improve it.', c:'study'},
+      {t: 'Do one 25-minute focused study session today. Record one thing you accomplished.', c:'habit'},
+      {t: 'Describe a future job you think will exist in 2050 and what skills it requires.', c:'writing'},
+      {t: 'List three small changes you can make this week to improve your study routine.', c:'study'},
+      {t: 'Sketch a quick idea for a short story where the main character loses their phone.', c:'creativity'},
+      {t: 'Set a tiny goal: complete one page of notes today. Share how it felt.', c:'habit'},
+      {t: 'Explain a complex idea you know in simple words a friend could understand.', c:'writing'},
+      {t: 'Choose one concept and teach it to an imaginary student for 5 minutes.', c:'study'},
+      {t: 'Write a short letter to your future self about what you hope to have learned in 6 months.', c:'writing'},
+      {t: 'Pick a habit you want to build — do it for 2 days straight and note the difference.', c:'habit'},
+      {t: 'Create a 3-item checklist for preparing for an exam the night before.', c:'study'},
+      {t: 'Invent a playful challenge for your study group and invite three friends to join.', c:'creativity'},
+      {t: 'Summarize a news article you read today in one paragraph.', c:'writing'},
+      {t: 'Take a 10-minute break and write down five things you saw during that break.', c:'creativity'}
+    ];
+
+    // Utility helpers
+    const $ = id => document.getElementById(id);
+
+    // Determine daily prompt index (stable for each day) using date hashing
+    function dailyIndexForDate(date, listLength){
+      const s = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+date.getDate();
+      let hash = 0; for(let i=0;i<s.length;i++){hash = ((hash<<5)-hash)+s.charCodeAt(i); hash |= 0}
+      return Math.abs(hash) % listLength;
+    }
+
+    // Get prompts by category
+    function promptsForCategory(cat){
+      if(cat === 'all') return PROMPTS;
+      return PROMPTS.filter(p=>p.c===cat);
+    }
+
+    // State
+    let dailyMode = true;
+
+    function showPrompt(obj){
+      $('prompt').textContent = obj.t;
+      $('source').textContent = 'Curated';
+    }
+
+    function showDaily(){
+      const cat = $('category').value;
+      const list = promptsForCategory(cat);
+      const idx = dailyIndexForDate(new Date(), list.length);
+      showPrompt(list[idx]);
+      $('badge').textContent = 'Daily Prompt';
+      dailyMode = true;
+      $('dailyToggle').textContent = '🌞 Daily';
+    }
+
+    function showRandom(){
+      const cat = $('category').value;
+      const list = promptsForCategory(cat);
+      const idx = Math.floor(Math.random()*list.length);
+      showPrompt(list[idx]);
+      $('badge').textContent = 'Random Prompt';
+      dailyMode = false;
+      $('dailyToggle').textContent = '☀️ Daily';
+    }
+
+    // Init
+    window.addEventListener('load', ()=>{
+      // initial daily prompt
+      showDaily();
+
+      $('newBtn').addEventListener('click', ()=>{
+        showRandom();
+      });
+
+      $('copyBtn').addEventListener('click', async ()=>{
+        try{
+          await navigator.clipboard.writeText($('prompt').textContent);
+          alert('Prompt copied to clipboard!');
+        }catch(e){
+          alert('Copy failed — select the text and copy manually.');
+        }
+      });
+
+      $('shareBtn').addEventListener('click', async ()=>{
+        const text = $('prompt').textContent + ' — from Daily Prompt';
+        if(navigator.share){
+          try{ await navigator.share({title:'Daily Prompt', text, url:location.href}); }
+          catch(e){}
+        }else{
+          // fallback: copy text and instruct
+          try{ await navigator.clipboard.writeText(text); alert('Prompt copied. Paste it into your app to share.'); }
+          catch(e){ alert('Your browser does not support sharing.'); }
+        }
+      });
+
+      $('dailyToggle').addEventListener('click', ()=>{
+        if(dailyMode) { showRandom(); } else { showDaily(); }
+      });
+
+      $('category').addEventListener('change', ()=>{
+        if(dailyMode) showDaily(); else showRandom();
+      });
+
+      $('downloadBtn').addEventListener('click', ()=>{
+        // create a tiny downloadable prompt pack (client-side)
+        const content = PROMPTS.map(p=>'['+p.c+'] '+p.t).join('\n\n');
+        const blob = new Blob([content],{type:'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'daily-prompt-pack.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      });
+
+      $('moreLink').addEventListener('click', (e)=>{ e.preventDefault(); alert('Coming soon: 7‑day focus challenge.'); });
+      $('donate').addEventListener('click', (e)=>{ e.preventDefault(); alert('Donation link placeholder. Add your BuyMeACoffee or PayPal link.'); });
+    });
+
+    // --- OPTIONAL: Add simple analytics hook (you can integrate Google Analytics or Plausible) ---
+    // Example comment: insert analytics script here for visitor insights.
+
+    // --- ADVICE FOR DEPLOYMENT ---
+    // 1) Save this file as index.html. 2) Create a free GitHub account, create a repo, push this file, and enable GitHub Pages in repo settings.
+    // 3) To monetize add AdSense code where the footer shows 'Ads placeholder'. Verify AdSense policies before adding.
+
+  </script>
+</body>
+</html>
